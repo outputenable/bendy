@@ -115,7 +115,7 @@ impl<'ser> Decoder<'ser> {
         }
 
         #[cfg(debug)]
-        let ival = istr::from_utf8(&self.source[self.offset..curpos])
+        let ival = str::from_utf8(&self.source[self.offset..curpos])
             .expect("We've already examined every byte in the string");
 
         #[cfg(not(debug))]
