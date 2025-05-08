@@ -110,20 +110,19 @@ impl<'ser> Decoder<'ser> {
             curpos += 1;
         }
 
-        if !success {
-            return Err(StructureError::UnexpectedEof);
+        if success {
+            let bytes = &self.source[self.offset..curpos];
+            self.offset = curpos + 1 /* to skip terminator */;
+            Ok(if cfg!(debug_assertions) {
+                str::from_utf8(bytes).expect("We've already examined every byte in the string")
+            } else {
+                // SAFETY: We checked above that `bytes` contains only ASCII characters, so avoid a
+                // second UTF-8 check here.
+                unsafe { str::from_utf8_unchecked(bytes) }
+            })
+        } else {
+            Err(StructureError::UnexpectedEof)
         }
-
-        #[cfg(debug_assertions)]
-        let ival = str::from_utf8(&self.source[self.offset..curpos])
-            .expect("We've already examined every byte in the string");
-
-        #[cfg(not(debug_assertions))]
-        let ival = // Avoid a second UTF-8 check here
-            unsafe { str::from_utf8_unchecked(&self.source[self.offset..curpos]) };
-        self.offset = curpos + 1;
-
-        Ok(ival)
     }
 
     fn raw_next_token(&mut self) -> Result<Token<'ser>, Error> {
